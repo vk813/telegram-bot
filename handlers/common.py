@@ -124,10 +124,14 @@ async def handle_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
         from handlers.filter import filter_choose_callback
         return await filter_choose_callback(update, context)
 
-    # Подсказки (ℹ️)
-    if data.startswith("hint_"):
+    # Подсказки (ℹ️) и подробности о фильтрах
+    if data.startswith("hint_") or data.startswith("filter_more_"):
         from handlers.filter import filter_hint_handler
         return await filter_hint_handler(update, context)
+
+    if data.startswith("filter_scheme_"):
+        from handlers.filter import filter_scheme_handler
+        return await filter_scheme_handler(update, context)
 
     # Остальные неизвестные callback_data
     logging.warning(f"Неизвестный callback_data: {data}")

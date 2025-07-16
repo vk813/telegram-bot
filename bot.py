@@ -40,6 +40,7 @@ from handlers.profile import phone_conv, profile, edit_phone
 from handlers.filter import (
     show_filters,
     filter_hint_handler,
+    filter_scheme_handler,
     filter_choose_callback,
     handle_choose_date
 )
@@ -186,7 +187,8 @@ def main():
     app.add_handler(CallbackQueryHandler(wait_for_filter_photo, pattern="^add_photo_"))
     app.add_handler(CallbackQueryHandler(start_add_filter, pattern="^register$"))
     app.add_handler(CallbackQueryHandler(ai_help_handler, pattern="^ai_help$"))
-    app.add_handler(CallbackQueryHandler(filter_hint_handler, pattern=r"^hint_"))
+    app.add_handler(CallbackQueryHandler(filter_hint_handler, pattern=r"^(hint_|filter_more_)"))
+    app.add_handler(CallbackQueryHandler(filter_scheme_handler, pattern=r"^filter_scheme_"))
 
  
 

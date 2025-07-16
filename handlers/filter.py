@@ -12,7 +12,7 @@ from constants import (
     VK_CONTACT, CTA_VARIANTS, filter_status_color, get_main_inline_keyboard, get_filters_keyboard,
     PROFILE_EDIT, PROFILE_PHONE, PROFILE_EMAIL, get_back_keyboard, FILTER_INTERVALS
 )
-from handlers.filter_hints import FILTER_HINTS
+from handlers.filter_hints import FILTER_HINTS, get_filter_info
 from telegram.constants import ParseMode
 
 logger = logging.getLogger(__name__)
@@ -46,6 +46,10 @@ async def filter_choose_callback(update: Update, context: ContextTypes.DEFAULT_T
     context.user_data["selected_filter_type"] = filter_type
 
     await query.answer()
+    info_text, info_kb = get_filter_info(filter_type)
+    if info_text:
+        await query.message.reply_text(info_text, reply_markup=info_kb)
+
     await query.message.reply_text(
         f"📅 Вы выбрали: {MAIN_LABELS.get(filter_type, filter_type)}.\n"
         "Введите дату установки фильтра (например, 09.07.2025):"
@@ -86,7 +90,10 @@ async def handle_choose_date(update: Update, context: ContextTypes.DEFAULT_TYPE)
 
 async def filter_hint_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
     query = update.callback_query
-    key = query.data.replace("hint_", "")
+    if query.data.startswith("hint_"):
+        key = query.data.replace("hint_", "")
+    else:
+        key = query.data.replace("filter_more_", "")
     data = FILTER_HINTS.get(key)
 
     if not data:
@@ -115,6 +122,20 @@ async def filter_hint_handler(update: Update, context: ContextTypes.DEFAULT_TYPE
             reply_markup=get_back_keyboard()
         )
         await query.answer()
+
+
+async def filter_scheme_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    """Send filter scheme/photo if available."""
+    query = update.callback_query
+    key = query.data.replace("filter_scheme_", "")
+    data = FILTER_HINTS.get(key)
+
+    if not data or not data.get("image"):
+        await query.answer("Схема недоступна", show_alert=True)
+        return
+
+    await query.message.reply_photo(open(data["image"], "rb"))
+    await query.answer()
 
 
 async def show_filters(update: Update, context: ContextTypes.DEFAULT_TYPE):

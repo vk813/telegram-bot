@@ -119,3 +119,26 @@ FILTER_HINTS = {
         "image": None,
     },
 }
+
+from telegram import InlineKeyboardMarkup, InlineKeyboardButton
+
+
+def get_filter_info(filter_key: str):
+    """Return brief description text and buttons for the filter."""
+    data = FILTER_HINTS.get(filter_key)
+    if not data:
+        return None, None
+
+    text = (
+        f"{data['name']}\n"
+        f"{data['description']}\n"
+        f"Срок службы: {data['lifetime']}.\n"
+        f"{data['symptoms']}"
+    )
+
+    buttons = [[InlineKeyboardButton("❓ Подробнее", callback_data=f"filter_more_{filter_key}")]]
+    if data.get("image"):
+        buttons.append([InlineKeyboardButton("Показать схему", callback_data=f"filter_scheme_{filter_key}")])
+
+    return text, InlineKeyboardMarkup(buttons)
+
