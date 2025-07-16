@@ -22,6 +22,10 @@ def _main_menu_text(user) -> str:
     )
 
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
+    print(
+        f"/start called! chat_id={update.effective_chat.id} "
+        f"message={getattr(update.message, 'text', None)}"
+    )
     logging.debug("start called: update=%r", update)
     try:
         user = update.effective_user
@@ -220,8 +224,8 @@ async def show_menu_callback(update: Update, context: ContextTypes.DEFAULT_TYPE)
     return ConversationHandler.END
 
 async def support_ai(update: Update, context: ContextTypes.DEFAULT_TYPE):
-        await update.callback_query.answer()
-        await update.callback_query.edit_message_text(
+    await update.callback_query.answer()
+    await update.callback_query.edit_message_text(
         "🤖 Здесь вы можете узнать:\n"
         "• Как выбрать фильтр\n"
         "• Где купить фильтр\n"
@@ -230,4 +234,4 @@ async def support_ai(update: Update, context: ContextTypes.DEFAULT_TYPE):
         "Просто напишите свой вопрос, подскажу и помогу с выбором.\n\n"
         "Если нужна персональная консультация — напишите нашему менеджеру: @vkup25"
     )
-        return ConversationHandler.END
+    return ConversationHandler.END
