@@ -1,0 +1,199 @@
+from telegram import Update, InlineKeyboardMarkup, InlineKeyboardButton
+from telegram.ext import ContextTypes, ConversationHandler
+import logging
+from datetime import datetime, timedelta
+import json
+from database import async_session, Filter
+from sqlalchemy import select
+
+from constants import (
+    CHOOSING_TYPE, CHOOSING_DATE, MAIN_LABELS, ZAGOROD_LABELS,
+    VK_CONTACT, CTA_VARIANTS, filter_status_color, get_main_inline_keyboard, get_filters_keyboard,
+    PROFILE_EDIT, PROFILE_PHONE, PROFILE_EMAIL, FILTER_HINTS, get_back_keyboard, FILTER_INTERVALS
+)
+from telegram.constants import ParseMode
+
+logger = logging.getLogger(__name__)
+
+# --- Декоратор для ошибок ---
+def safe_handler(func):
+    async def wrapper(update: Update, context: ContextTypes.DEFAULT_TYPE):
+        try:
+            return await func(update, context)
+        except Exception as e:
+            logger.exception("Ошибка в filter.py: %s", e)
+            msg = getattr(update, "effective_message", None)
+            if msg:
+                await msg.reply_text("Что-то пошло не так. Попробуйте позже или /start.")
+            return ConversationHandler.END
+    return wrapper
+
+def parse_date(date_str):
+    for fmt in ("%d.%m.%Y", "%d-%m-%Y"):
+        try:
+            return datetime.strptime(date_str, fmt).date()
+        except Exception:
+            continue
+    return None
+
+CHOOSING_DATE = 10
+
+async def filter_choose_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    query = update.callback_query
+    filter_type = query.data
+    context.user_data["selected_filter_type"] = filter_type
+
+    await query.answer()
+    await query.message.reply_text(
+        f"📅 Вы выбрали: {MAIN_LABELS.get(filter_type, filter_type)}.\n"
+        "Введите дату установки фильтра (например, 09.07.2025):"
+    )
+    return CHOOSING_DATE
+
+@safe_handler
+async def handle_choose_date(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    date_str = update.message.text.strip()
+    install_date = parse_date(date_str)
+    if not install_date:
+        await update.message.reply_text("❗️ Введите дату в формате ДД.ММ.ГГГГ")
+        return CHOOSING_DATE
+
+    user_id = update.effective_user.id
+    filter_type = context.user_data.get("selected_filter_type")
+    if not filter_type:
+        await update.message.reply_text("Не удалось определить тип фильтра. Попробуйте сначала.")
+        return ConversationHandler.END
+
+    async with async_session() as session:
+        filter_obj = Filter(
+            user_id=user_id,
+            type=filter_type,
+            install_date=install_date,
+            interval=FILTER_INTERVALS[filter_type],
+            name=MAIN_LABELS.get(filter_type)
+        )
+        session.add(filter_obj)
+        await session.commit()
+
+    await update.message.reply_text(
+        "✅ Фильтр добавлен! Напомню о замене вовремя.",
+        reply_markup=get_main_inline_keyboard()
+    )
+    context.user_data.pop("selected_filter_type", None)
+    return ConversationHandler.END
+
+async def filter_hint_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    query = update.callback_query
+    key = query.data.replace("hint_", "")
+    hint = FILTER_HINTS.get(key, "Нет описания для этого фильтра.")
+
+    # Короткие описания — в pop-up без форматирования
+    if len(hint) < 180:
+        await query.answer(
+            text=hint,
+            show_alert=True
+        )
+    else:
+        await query.message.reply_text(
+            hint,
+            parse_mode="HTML",
+            reply_markup=get_back_keyboard()
+        )
+        await query.answer()
+
+
+async def show_filters(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    """Показывает список фильтров пользователя с кнопками действий."""
+    user_id = update.effective_user.id if update.effective_user else (
+        update.callback_query.from_user.id if getattr(update, "callback_query", None) else None
+    )
+    if not user_id:
+        logger.error("Не удалось определить user_id.")
+        await update.effective_message.reply_text("Ошибка: не удалось определить пользователя.")
+        return ConversationHandler.END
+
+    try:
+        async with async_session() as session:
+            result = await session.scalars(
+                select(Filter).where(Filter.user_id == user_id).order_by(Filter.install_date.desc())
+            )
+            filters = result.all()
+    except Exception as e:
+        logger.error(f"Ошибка получения фильтров (user_id={user_id}): {e}")
+        await update.effective_message.reply_text("Ошибка загрузки фильтров.")
+        return ConversationHandler.END
+
+    if not filters:
+        await update.effective_message.reply_text(
+            "У вас нет фильтров. 📝 Добавьте первый!",
+            reply_markup=get_main_inline_keyboard()
+        )
+        return ConversationHandler.END
+
+    today = datetime.now().date()
+    await update.effective_message.reply_text("Ваши фильтры:")
+
+    for f in filters:
+        days_left = (f.install_date + timedelta(days=f.interval) - today).days
+        status = filter_status_color(days_left)
+        title = (
+            f.name or
+            MAIN_LABELS.get(f.type) or
+            ZAGOROD_LABELS.get(f.type) or
+            f.type.title()
+        )
+
+        text = (
+            f"{status} <b>{title}</b>\n"
+            f"Установлен: {f.install_date:%d.%m.%Y}\n"
+            f"Осталось: <b>{days_left} д.</b>\n"
+            f"Замен: {getattr(f, 'replace_count', 0)}\n"
+        )
+
+        # ----------- КНОПКИ ДЕЙСТВИЙ -----------
+        keyboard = [
+            [
+                InlineKeyboardButton("✅ Уже заменил", callback_data=f"filter_replaced_{f.id}"),
+                InlineKeyboardButton("❌ Удалить", callback_data=f"filter_delete_{f.id}")
+            ],
+            [
+                InlineKeyboardButton("ℹ️ Описание", callback_data=f"hint_{f.type}"),
+                InlineKeyboardButton("✏️ Переименовать", callback_data=f"rename_filter_{f.id}")
+            ],
+            [
+                InlineKeyboardButton("📸 Добавить фото", callback_data=f"add_photo_{f.id}")
+            ]
+        ]
+
+        # ----------- ФОТО -----------
+        photos_list = []
+        photos = getattr(f, "photos", None)
+        if photos:
+            if isinstance(photos, str):
+                try:
+                    photos_list = json.loads(photos)
+                except Exception as ex:
+                    logger.warning(f"Не удалось распарсить photos у фильтра {f.id}: {ex}")
+                    photos_list = []
+            elif isinstance(photos, list):
+                photos_list = photos
+        if len(photos_list) > 0:
+            keyboard.append([
+                InlineKeyboardButton("👁 Смотреть фото", callback_data=f"view_photos_{f.id}"),
+                InlineKeyboardButton("🗑 Удалить фото", callback_data=f"del_photo_{f.id}")
+            ])
+            text += f"\n📸 Есть фото: {len(photos_list)}"
+
+        markup = InlineKeyboardMarkup(keyboard)
+        await update.effective_message.reply_text(
+            text, parse_mode="HTML", reply_markup=markup
+        )
+        context.user_data["last_filter_id"] = f.id
+
+    await update.effective_message.reply_text(
+        "Выберите дальнейшее действие:",
+        reply_markup=InlineKeyboardMarkup([
+            [InlineKeyboardButton("🔙 В меню", callback_data="back_to_menu")]
+        ])
+    )
+    return ConversationHandler.END

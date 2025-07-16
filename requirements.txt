@@ -1,0 +1,5 @@
+python-telegram-bot>=20.0
+sqlalchemy>=1.4
+aiosqlite  # для SQLite
+asyncpg    # для PostgreSQL
+python-dotenv
