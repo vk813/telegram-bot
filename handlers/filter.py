@@ -11,7 +11,7 @@ from constants import (
     VK_CONTACT, CTA_VARIANTS, filter_status_color, get_main_inline_keyboard, get_filters_keyboard,
     PROFILE_EDIT, PROFILE_PHONE, PROFILE_EMAIL, get_back_keyboard, FILTER_INTERVALS
 )
-from filter_hints import FILTER_HINTS
+from handlers.filter_hints import FILTER_HINTS
 from telegram.constants import ParseMode
 
 logger = logging.getLogger(__name__)

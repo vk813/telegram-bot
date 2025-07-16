@@ -58,7 +58,7 @@ OSMO_SET_MODULES = [
 ]
 
 # Подробные описания фильтров
-from filter_hints import FILTER_HINTS
+from handlers.filter_hints import FILTER_HINTS
 
 
 ZAGOROD_LABELS = {
