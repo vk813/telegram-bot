@@ -139,7 +139,7 @@ service_conv = ConversationHandler(
 
 logging.basicConfig(
     format="%(asctime)s | %(levelname)s | %(name)s | %(message)s",
-    level=logging.INFO,
+    level=logging.DEBUG,
     handlers=[
         RotatingFileHandler("bot.log", maxBytes=10_000_000, backupCount=5, encoding="utf-8"),
         logging.StreamHandler()

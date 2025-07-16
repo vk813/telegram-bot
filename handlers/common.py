@@ -22,27 +22,29 @@ def _main_menu_text(user) -> str:
     )
 
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
-    user = update.effective_user
-    if update.message:
-        try:
-            await update.message.delete()
-        except Exception as ex:
-            logging.warning(f"Не удалось удалить команду /start: {ex}")
-
-    is_new = False
+    logging.debug("start called: update=%r", update)
     try:
-        async with async_session() as session:
-            if not await session.get(User, user.id):
-                session.add(User(id=user.id,
-                                 username=user.username,
-                                 first_name=user.first_name))
-                await session.commit()
-                is_new = True
-    except Exception as e:
-        logging.error(f"Ошибка добавления пользователя: {e}")
-        await update.effective_message.reply_text(
-            "⚠️ Не удалось зарегистрировать вас. Попробуйте позже.")
-        return ConversationHandler.END
+        user = update.effective_user
+        if update.message:
+            try:
+                await update.message.delete()
+            except Exception as ex:
+                logging.warning(f"Не удалось удалить команду /start: {ex}")
+
+        is_new = False
+        try:
+            async with async_session() as session:
+                if not await session.get(User, user.id):
+                    session.add(User(id=user.id,
+                                     username=user.username,
+                                     first_name=user.first_name))
+                    await session.commit()
+                    is_new = True
+        except Exception as e:
+            logging.error(f"Ошибка добавления пользователя: {e}")
+            await update.effective_message.reply_text(
+                "⚠️ Не удалось зарегистрировать вас. Попробуйте позже.")
+            return ConversationHandler.END
 
     if is_new:
         await _send_clean_message(
@@ -55,9 +57,14 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
         )
         return ConversationHandler.END
 
-    text = _main_menu_text(user)
-    await _send_clean_message(update, context, text, reply_markup=get_main_inline_keyboard())
-    return ConversationHandler.END
+        text = _main_menu_text(user)
+        await _send_clean_message(update, context, text, reply_markup=get_main_inline_keyboard())
+        return ConversationHandler.END
+    except Exception:
+        logging.exception("Unhandled exception in start")
+        if update.effective_message:
+            await update.effective_message.reply_text("Произошла ошибка. Попробуйте позже.")
+        return ConversationHandler.END
 
 async def clear_history(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """Удаляет последние сообщения бота по команде /clear"""
@@ -93,8 +100,14 @@ async def send_clean_message(update: Update, context: ContextTypes.DEFAULT_TYPE,
 
 
 async def handle_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    await update.callback_query.answer()
-    data = update.callback_query.data
+    logging.debug(
+        "handle_callback called: update=%r callback_data=%r",
+        update,
+        getattr(update.callback_query, "data", None),
+    )
+    try:
+        await update.callback_query.answer()
+        data = update.callback_query.data
 
     if data == "show":
         from handlers.filter import show_filters
@@ -134,9 +147,14 @@ async def handle_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
         return await filter_scheme_handler(update, context)
 
     # Остальные неизвестные callback_data
-    logging.warning(f"Неизвестный callback_data: {data}")
-    await update.callback_query.answer("Неизвестная команда.", show_alert=True)
-    return ConversationHandler.END
+        logging.warning(f"Неизвестный callback_data: {data}")
+        await update.callback_query.answer("Неизвестная команда.", show_alert=True)
+        return ConversationHandler.END
+    except Exception:
+        logging.exception("Unhandled exception in handle_callback")
+        if update.callback_query:
+            await update.callback_query.answer("Произошла ошибка", show_alert=True)
+        return ConversationHandler.END
 
 
 
