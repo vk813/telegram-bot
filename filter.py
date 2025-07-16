@@ -9,7 +9,8 @@ from sqlalchemy import select
 from constants import (
     CHOOSING_TYPE, CHOOSING_DATE, MAIN_LABELS, ZAGOROD_LABELS,
     VK_CONTACT, CTA_VARIANTS, filter_status_color, get_main_inline_keyboard, get_filters_keyboard,
-    PROFILE_EDIT, PROFILE_PHONE, PROFILE_EMAIL, FILTER_HINTS, get_back_keyboard, FILTER_INTERVALS
+    PROFILE_EDIT, PROFILE_PHONE, PROFILE_EMAIL, FILTER_HINTS, FILTER_DETAILS,
+    get_back_keyboard, FILTER_INTERVALS
 )
 from telegram.constants import ParseMode
 
@@ -101,6 +102,22 @@ async def filter_hint_handler(update: Update, context: ContextTypes.DEFAULT_TYPE
         )
         await query.answer()
 
+async def filter_detail_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    """Показывает подробную информацию о выбранном фильтре."""
+    query = update.callback_query
+    key = query.data.replace("detail_", "")
+    detail = FILTER_DETAILS.get(key, "Нет подробной информации для этого фильтра.")
+    await query.answer()
+    if len(detail) < 180:
+        await query.answer(text=detail, show_alert=True)
+    else:
+        await query.message.reply_text(
+            detail,
+            parse_mode="HTML",
+            disable_web_page_preview=True,
+            reply_markup=get_back_keyboard()
+        )
+
 
 async def show_filters(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """Показывает список фильтров пользователя с кнопками действий."""
@@ -158,6 +175,9 @@ async def show_filters(update: Update, context: ContextTypes.DEFAULT_TYPE):
             ],
             [
                 InlineKeyboardButton("ℹ️ Описание", callback_data=f"hint_{f.type}"),
+                InlineKeyboardButton("❓ Подробнее", callback_data=f"detail_{f.type}")
+            ],
+            [
                 InlineKeyboardButton("✏️ Переименовать", callback_data=f"rename_filter_{f.id}")
             ],
             [

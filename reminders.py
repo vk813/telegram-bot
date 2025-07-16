@@ -3,6 +3,7 @@ from database import async_session, Filter
 from sqlalchemy import select
 from datetime import datetime, timedelta, timezone
 import logging
+from telegram import InlineKeyboardMarkup, InlineKeyboardButton
 
 async def send_reminders(context):
     today = datetime.now(timezone.utc).date()
@@ -21,7 +22,10 @@ async def send_reminders(context):
                             f"Осталось дней: <b>{days_left}</b>.\n"
                             f"Пора задуматься о замене фильтра!"
                         ),
-                        parse_mode="HTML"
+                        parse_mode="HTML",
+                        reply_markup=InlineKeyboardMarkup([
+                            [InlineKeyboardButton("❓ Подробнее", callback_data=f"detail_{f.type}")]
+                        ])
                     )
                 except Exception as e:
                     logging.error(f"Ошибка отправки напоминания: {e}")
