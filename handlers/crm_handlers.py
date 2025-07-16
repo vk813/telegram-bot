@@ -2,6 +2,7 @@ from telegram import Update
 from telegram.ext import (
     ConversationHandler, CommandHandler, MessageHandler, filters, ContextTypes
 )
+from handlers.common import start
 
 CLIENT_NAME, CLIENT_PHONE, CONFIRM_CLIENT = range(3)
 
@@ -40,6 +41,9 @@ crm_conv_handler = ConversationHandler(
         CLIENT_PHONE: [MessageHandler(filters.TEXT & ~filters.COMMAND, handle_client_phone)],
         CONFIRM_CLIENT: [MessageHandler(filters.TEXT & ~filters.COMMAND, confirm_client)],
     },
-    fallbacks=[CommandHandler('cancel', cancel)],
+    fallbacks=[
+        CommandHandler('cancel', cancel),
+        CommandHandler('start', start)
+    ],
     per_message=False,
 )

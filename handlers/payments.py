@@ -1,6 +1,7 @@
 import logging
 from telegram import Update, InlineKeyboardMarkup, InlineKeyboardButton, ReplyKeyboardMarkup
 from telegram.ext import ContextTypes, CommandHandler, CallbackQueryHandler, ConversationHandler, MessageHandler, filters
+from handlers.common import start
 
 logger = logging.getLogger(__name__)
 
@@ -61,7 +62,8 @@ payments_conv = ConversationHandler(
     },
     fallbacks=[
         MessageHandler(filters.Regex(f"^{CANCEL_BUTTON}$"), payment_cancel),
-        CallbackQueryHandler(payment_cancel, pattern=f"^{CANCEL_BUTTON}$")
+        CallbackQueryHandler(payment_cancel, pattern=f"^{CANCEL_BUTTON}$"),
+        CommandHandler("start", start)
     ],
     allow_reentry=True
 )
