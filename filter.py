@@ -7,12 +7,16 @@ from database import async_session, Filter
 from sqlalchemy import select
 
 from constants import (
-    CHOOSING_TYPE, CHOOSING_DATE, MAIN_LABELS, ZAGOROD_LABELS,
-    VK_CONTACT, CTA_VARIANTS, filter_status_color, get_main_inline_keyboard, get_filters_keyboard,
-    PROFILE_EDIT, PROFILE_PHONE, PROFILE_EMAIL, get_back_keyboard, FILTER_INTERVALS
+    CHOOSING_TYPE,
+    CHOOSING_DATE,
+    MAIN_LABELS,
+    ZAGOROD_LABELS,
+    filter_status_color,
+    get_main_inline_keyboard,
+    get_back_keyboard,
+    FILTER_INTERVALS,
 )
 from filter_hints import FILTER_HINTS
-from telegram.constants import ParseMode
 
 logger = logging.getLogger(__name__)
 
