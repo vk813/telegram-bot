@@ -41,20 +41,32 @@ def parse_date(date_str):
 CHOOSING_DATE = 10
 
 async def filter_choose_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    query = update.callback_query
-    filter_type = query.data
-    context.user_data["selected_filter_type"] = filter_type
-
-    await query.answer()
-    info_text, info_kb = get_filter_info(filter_type)
-    if info_text:
-        await query.message.reply_text(info_text, reply_markup=info_kb)
-
-    await query.message.reply_text(
-        f"📅 Вы выбрали: {MAIN_LABELS.get(filter_type, filter_type)}.\n"
-        "Введите дату установки фильтра (например, 09.07.2025):"
+    logging.debug(
+        "filter_choose_callback called: update=%r callback_data=%r",
+        update,
+        getattr(update.callback_query, "data", None),
     )
-    return CHOOSING_DATE
+    try:
+        query = update.callback_query
+        filter_type = query.data
+        context.user_data["selected_filter_type"] = filter_type
+
+        await query.answer()
+        info_text, info_kb = get_filter_info(filter_type)
+        if info_text:
+            await query.message.reply_text(info_text, reply_markup=info_kb)
+
+        await query.message.reply_text(
+            f"📅 Вы выбрали: {MAIN_LABELS.get(filter_type, filter_type)}.\n",
+            "Введите дату установки фильтра (например, 09.07.2025):",
+        )
+        return CHOOSING_DATE
+    except Exception:
+        logging.exception("Unhandled exception in filter_choose_callback")
+        if update.callback_query:
+            await update.callback_query.answer("Произошла ошибка", show_alert=True)
+        return ConversationHandler.END
+
 
 @safe_handler
 async def handle_choose_date(update: Update, context: ContextTypes.DEFAULT_TYPE):
