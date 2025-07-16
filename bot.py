@@ -117,6 +117,7 @@ filter_add_conv = ConversationHandler(
         CommandHandler("cancel", cancel),
         CallbackQueryHandler(main_menu_callback, pattern="^main_menu$"),
         CallbackQueryHandler(cancel_callback, pattern="^cancel$"),
+        CommandHandler("start", start),
     ]
 )
 
@@ -132,7 +133,8 @@ service_conv = ConversationHandler(
     fallbacks=[
         CommandHandler("cancel", cancel),
         CallbackQueryHandler(cancel_callback, pattern="^cancel$"),
-        CallbackQueryHandler(main_menu_callback, pattern="^main_menu$")
+        CallbackQueryHandler(main_menu_callback, pattern="^main_menu$"),
+        CommandHandler("start", start)
     ]
 )
 

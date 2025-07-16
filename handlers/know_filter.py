@@ -1,6 +1,7 @@
 import logging
 from telegram import Update, InlineKeyboardMarkup, InlineKeyboardButton
-from telegram.ext import ContextTypes, ConversationHandler, MessageHandler, CallbackQueryHandler, filters
+from telegram.ext import ContextTypes, ConversationHandler, MessageHandler, CallbackQueryHandler, CommandHandler, filters
+from handlers.common import start
 from constants import get_main_inline_keyboard, ADMIN_CHAT_ID
 import traceback
 from utils import send_clean_message
@@ -68,5 +69,8 @@ know_filter_conv = ConversationHandler(
     states={
         KNOW_FILTER_PHOTO: [MessageHandler(filters.PHOTO, receive_know_filter_photo)],
     },
-    fallbacks=[CallbackQueryHandler(cancel_know_filter, pattern="^cancel_know_filter$")]
+    fallbacks=[
+        CallbackQueryHandler(cancel_know_filter, pattern="^cancel_know_filter$"),
+        CommandHandler("start", start)
+    ]
 )
