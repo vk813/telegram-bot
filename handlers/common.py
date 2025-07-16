@@ -22,6 +22,10 @@ def _main_menu_text(user) -> str:
     )
 
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
+    print(
+        f"/start called! chat_id={update.effective_chat.id} "
+        f"message={getattr(update.message, 'text', None)}"
+    )
     logging.debug("start called: update=%r", update)
     try:
         user = update.effective_user
