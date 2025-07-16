@@ -187,8 +187,7 @@ async def send_current_photo(update: Update, context: ContextTypes.DEFAULT_TYPE)
             await msg_obj.reply_text("Ошибка показа фото. Сообщите в поддержку.")
 
 async def view_photos_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    print("=== view_photos_callback ВЫЗВАН ===", update.callback_query.data)
-    await update.callback_query.answer("Callback получен!")
+    await update.callback_query.answer()
     query = update.callback_query
     filter_id = int(query.data.replace("view_photos_", ""))
     async with async_session() as session:
