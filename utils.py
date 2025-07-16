@@ -1,5 +1,9 @@
 from telegram import Update, Message, InlineKeyboardButton, InlineKeyboardMarkup
 from telegram.ext import ContextTypes
+import logging
+import re
+
+logger = logging.getLogger(__name__)
 
 async def delete_bot_messages(context: ContextTypes.DEFAULT_TYPE, chat_id: int):
     """
@@ -84,4 +88,21 @@ async def split_message_callback(update: Update, context: ContextTypes.DEFAULT_T
     context.user_data[f"{prefix}_idx"] = idx
     markup = _get_pagination_keyboard(prefix, idx, len(pages))
     await query.message.edit_text(pages[idx], reply_markup=markup)
+
+
+def safe_callback_data(data: object) -> str:
+    """Return a Telegram-safe callback_data string (<=64 bytes, allowed chars)."""
+    orig = data
+    if data is None:
+        data = ""
+    data = str(data)
+    # Remove disallowed characters
+    data = re.sub(r"[^A-Za-z0-9_-]", "", data)
+    # Truncate to 64 bytes
+    if len(data.encode("utf-8")) > 64:
+        data = data.encode("utf-8")[:64].decode("utf-8", errors="ignore")
+    if not data:
+        data = "noop"
+    logger.info("callback_data=%r", data)
+    return data
 

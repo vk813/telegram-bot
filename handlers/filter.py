@@ -1,4 +1,5 @@
 from telegram import Update, InlineKeyboardMarkup, InlineKeyboardButton
+from utils import safe_callback_data
 from telegram.ext import ContextTypes, ConversationHandler
 import logging
 from datetime import datetime, timedelta
@@ -167,15 +168,15 @@ async def show_filters(update: Update, context: ContextTypes.DEFAULT_TYPE):
         # ----------- КНОПКИ ДЕЙСТВИЙ -----------
         keyboard = [
             [
-                InlineKeyboardButton("✅ Уже заменил", callback_data=f"filter_replaced_{f.id}"),
-                InlineKeyboardButton("❌ Удалить", callback_data=f"filter_delete_{f.id}")
+                InlineKeyboardButton("✅ Уже заменил", callback_data=safe_callback_data(f"filter_replaced_{f.id}")),
+                InlineKeyboardButton("❌ Удалить", callback_data=safe_callback_data(f"filter_delete_{f.id}"))
             ],
             [
-                InlineKeyboardButton("ℹ️ Описание", callback_data=f"hint_{f.type}"),
-                InlineKeyboardButton("✏️ Переименовать", callback_data=f"rename_filter_{f.id}")
+                InlineKeyboardButton("ℹ️ Описание", callback_data=safe_callback_data(f"hint_{f.type}")),
+                InlineKeyboardButton("✏️ Переименовать", callback_data=safe_callback_data(f"rename_filter_{f.id}"))
             ],
             [
-                InlineKeyboardButton("📸 Добавить фото", callback_data=f"add_photo_{f.id}")
+                InlineKeyboardButton("📸 Добавить фото", callback_data=safe_callback_data(f"add_photo_{f.id}"))
             ]
         ]
 
@@ -193,8 +194,8 @@ async def show_filters(update: Update, context: ContextTypes.DEFAULT_TYPE):
                 photos_list = photos
         if len(photos_list) > 0:
             keyboard.append([
-                InlineKeyboardButton("👁 Смотреть фото", callback_data=f"view_photos_{f.id}"),
-                InlineKeyboardButton("🗑 Удалить фото", callback_data=f"del_photo_{f.id}")
+                InlineKeyboardButton("👁 Смотреть фото", callback_data=safe_callback_data(f"view_photos_{f.id}")),
+                InlineKeyboardButton("🗑 Удалить фото", callback_data=safe_callback_data(f"del_photo_{f.id}"))
             ])
             text += f"\n📸 Есть фото: {len(photos_list)}"
 
@@ -207,7 +208,7 @@ async def show_filters(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await update.effective_message.reply_text(
         "Выберите дальнейшее действие:",
         reply_markup=InlineKeyboardMarkup([
-            [InlineKeyboardButton("🔙 В меню", callback_data="back_to_menu")]
+            [InlineKeyboardButton("🔙 В меню", callback_data=safe_callback_data("back_to_menu"))]
         ])
     )
     return ConversationHandler.END

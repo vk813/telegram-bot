@@ -1,6 +1,7 @@
 from database import async_session, Filter
 from sqlalchemy import select
 from telegram import InlineKeyboardMarkup, InlineKeyboardButton, Update
+from utils import safe_callback_data
 from telegram.ext import ConversationHandler, ContextTypes
 from datetime import datetime, timezone
 import logging
@@ -81,12 +82,24 @@ async def filter_action_handler(update: Update, context: ContextTypes.DEFAULT_TY
                     )
                     keyboard = [
                         [
-                            InlineKeyboardButton("✅ Уже заменил", callback_data=f"filter_replaced_{filt.id}"),
-                            InlineKeyboardButton("❌ Удалить", callback_data=f"filter_delete_{filt.id}")
+                            InlineKeyboardButton(
+                                "✅ Уже заменил",
+                                callback_data=safe_callback_data(f"filter_replaced_{filt.id}")
+                            ),
+                            InlineKeyboardButton(
+                                "❌ Удалить",
+                                callback_data=safe_callback_data(f"filter_delete_{filt.id}")
+                            )
                         ],
                         [
-                            InlineKeyboardButton("📸 Добавить фото", callback_data=f"add_photo_{filt.id}"),
-                            InlineKeyboardButton("✏️ Переименовать", callback_data=f"rename_filter_{filt.id}")
+                            InlineKeyboardButton(
+                                "📸 Добавить фото",
+                                callback_data=safe_callback_data(f"add_photo_{filt.id}")
+                            ),
+                            InlineKeyboardButton(
+                                "✏️ Переименовать",
+                                callback_data=safe_callback_data(f"rename_filter_{filt.id}")
+                            )
                         ]
                     ]
                     markup = InlineKeyboardMarkup(keyboard)
