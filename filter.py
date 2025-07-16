@@ -9,8 +9,9 @@ from sqlalchemy import select
 from constants import (
     CHOOSING_TYPE, CHOOSING_DATE, MAIN_LABELS, ZAGOROD_LABELS,
     VK_CONTACT, CTA_VARIANTS, filter_status_color, get_main_inline_keyboard, get_filters_keyboard,
-    PROFILE_EDIT, PROFILE_PHONE, PROFILE_EMAIL, FILTER_HINTS, get_back_keyboard, FILTER_INTERVALS
+    PROFILE_EDIT, PROFILE_PHONE, PROFILE_EMAIL, get_back_keyboard, FILTER_INTERVALS
 )
+from filter_hints import FILTER_HINTS
 from telegram.constants import ParseMode
 
 logger = logging.getLogger(__name__)
@@ -85,17 +86,30 @@ async def handle_choose_date(update: Update, context: ContextTypes.DEFAULT_TYPE)
 async def filter_hint_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
     query = update.callback_query
     key = query.data.replace("hint_", "")
-    hint = FILTER_HINTS.get(key, "Нет описания для этого фильтра.")
+    data = FILTER_HINTS.get(key)
 
-    # Короткие описания — в pop-up без форматирования
-    if len(hint) < 180:
-        await query.answer(
-            text=hint,
-            show_alert=True
+    if not data:
+        await query.answer("Нет описания для этого фильтра.", show_alert=True)
+        return
+
+    text = (
+        f"<b>{data['name']}</b>\n"
+        f"{data['description']}\n\n"
+        f"<b>Срок службы:</b> {data['lifetime']}\n"
+        f"<b>Когда менять:</b> {data['symptoms']}"
+    )
+
+    if data.get("image"):
+        await query.message.reply_photo(
+            data["image"], caption=text, parse_mode="HTML",
+            reply_markup=get_back_keyboard()
         )
+        await query.answer()
+    elif len(text) < 180:
+        await query.answer(text=text, show_alert=True)
     else:
         await query.message.reply_text(
-            hint,
+            text,
             parse_mode="HTML",
             reply_markup=get_back_keyboard()
         )
