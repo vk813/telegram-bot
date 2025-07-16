@@ -1,4 +1,4 @@
-from telegram import Update, Message
+from telegram import Update, Message, InlineKeyboardButton, InlineKeyboardMarkup
 from telegram.ext import ContextTypes
 
 async def delete_bot_messages(context: ContextTypes.DEFAULT_TYPE, chat_id: int):
@@ -49,3 +49,39 @@ def add_bot_message_id(context: ContextTypes.DEFAULT_TYPE, message_id: int):
     if 'bot_msgs' not in context.user_data:
         context.user_data['bot_msgs'] = []
     context.user_data['bot_msgs'].append(message_id)
+
+
+def _get_pagination_keyboard(prefix: str, idx: int, total: int) -> InlineKeyboardMarkup | None:
+    """Создать клавиатуру пагинации."""
+    buttons = []
+    if idx > 0:
+        buttons.append(InlineKeyboardButton("⬅️ Назад", callback_data=f"{prefix}_prev"))
+    if idx < total - 1:
+        buttons.append(InlineKeyboardButton("➡️ Далее", callback_data=f"{prefix}_next"))
+    return InlineKeyboardMarkup([buttons]) if buttons else None
+
+
+async def split_message(update: Update, context: ContextTypes.DEFAULT_TYPE, text: str, prefix: str = "split"):
+    """Отправить длинный текст несколькими сообщениями с пагинацией."""
+    parts = [text[i:i + 4096] for i in range(0, len(text), 4096)]
+    context.user_data[f"{prefix}_pages"] = parts
+    context.user_data[f"{prefix}_idx"] = 0
+    markup = _get_pagination_keyboard(prefix, 0, len(parts))
+    await send_clean_message(update, context, parts[0], reply_markup=markup)
+
+
+async def split_message_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    """Callback для навигации по страницам, созданным split_message."""
+    query = update.callback_query
+    await query.answer()
+    prefix, action = query.data.rsplit("_", 1)
+    pages = context.user_data.get(f"{prefix}_pages", [])
+    idx = context.user_data.get(f"{prefix}_idx", 0)
+    if action == "next" and idx < len(pages) - 1:
+        idx += 1
+    elif action == "prev" and idx > 0:
+        idx -= 1
+    context.user_data[f"{prefix}_idx"] = idx
+    markup = _get_pagination_keyboard(prefix, idx, len(pages))
+    await query.message.edit_text(pages[idx], reply_markup=markup)
+
