@@ -9,8 +9,6 @@ logger = logging.getLogger(__name__)
 
 YOUR_MANAGER_ID = int(os.getenv("MANAGER_ID", "660442813"))
 
-import time
-
 DEBOUNCE_SECONDS = 2
 
 # Клавиатуры
@@ -30,15 +28,6 @@ def safe_handler(func):
             return ConversationHandler.END
     return wrapper
 
-
-async def subscription_interest(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    now = time.time()
-    last_click = context.user_data.get('last_click', 0)
-    if now - last_click < DEBOUNCE_SECONDS:
-        return  # игнорировать повтор
-    context.user_data['last_click'] = now
-
-
 # Старт подписки — из меню (callback_data="subscriptions")
 async def subscription_start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     keyboard = [
@@ -55,6 +44,12 @@ async def subscription_start(update: Update, context: ContextTypes.DEFAULT_TYPE)
 
 # Ответ на "Да/Нет"
 async def subscription_interest(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    now = time.time()
+    last_click = context.user_data.get('last_click', 0)
+    if now - last_click < DEBOUNCE_SECONDS:
+        return  # игнорировать повторные нажатия
+    context.user_data['last_click'] = now
+
     query = update.callback_query
     if query.data == "subscription_no":
         await query.edit_message_text("Спасибо за ответ! Если что — всегда на связи. Хорошего дня!")
