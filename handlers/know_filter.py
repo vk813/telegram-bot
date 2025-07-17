@@ -71,6 +71,5 @@ know_filter_conv = ConversationHandler(
     },
     fallbacks=[
         CallbackQueryHandler(cancel_know_filter, pattern="^cancel_know_filter$"),
-        CommandHandler("start", start)
     ]
 )

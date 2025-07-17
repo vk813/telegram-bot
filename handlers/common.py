@@ -1,5 +1,6 @@
 import random
 import logging
+from datetime import datetime
 from telegram import Update, InlineKeyboardMarkup, InlineKeyboardButton
 from telegram.ext import ContextTypes, ConversationHandler
 from constants import (
@@ -22,11 +23,17 @@ def _main_menu_text(user) -> str:
     )
 
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
-    print(
-        f"/start called! chat_id={update.effective_chat.id} "
-        f"message={getattr(update.message, 'text', None)}"
+    user_id = getattr(update.effective_user, "id", None)
+    chat_id = getattr(update.effective_chat, "id", None)
+    msg_id = getattr(update.effective_message, "message_id", None)
+    start_ts = datetime.now().isoformat()
+    logging.debug(
+        "start enter: user=%s chat=%s msg=%s time=%s",
+        user_id,
+        chat_id,
+        msg_id,
+        start_ts,
     )
-    logging.debug("start called: update=%r", update)
     try:
         user = update.effective_user
         if update.message:
@@ -69,6 +76,14 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
         if update.effective_message:
             await update.effective_message.reply_text("Произошла ошибка. Попробуйте позже.")
         return ConversationHandler.END
+    finally:
+        logging.debug(
+            "start exit: user=%s chat=%s msg=%s time=%s",
+            user_id,
+            chat_id,
+            msg_id,
+            datetime.now().isoformat(),
+        )
 
 async def clear_history(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """Удаляет последние сообщения бота по команде /clear"""
