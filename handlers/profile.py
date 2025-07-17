@@ -153,7 +153,6 @@ phone_conv = ConversationHandler(
     fallbacks=[
         CommandHandler("cancel", cancel_phone),
         CallbackQueryHandler(cancel_phone, pattern="^back_to_menu$"),
-        CommandHandler("start", start)
     ],
     per_message=False
 )

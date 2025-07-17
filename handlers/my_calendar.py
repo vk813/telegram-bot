@@ -278,6 +278,5 @@ reg_conv = ConversationHandler(
     fallbacks=[
         CallbackQueryHandler(back_to_menu_callback, pattern="^back_to_menu$"),
         CallbackQueryHandler(cancel_calendar_handler, pattern="^calendar_cancel$"),
-        CommandHandler("start", start)
     ],
 )

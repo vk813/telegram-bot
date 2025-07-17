@@ -63,7 +63,6 @@ payments_conv = ConversationHandler(
     fallbacks=[
         MessageHandler(filters.Regex(f"^{CANCEL_BUTTON}$"), payment_cancel),
         CallbackQueryHandler(payment_cancel, pattern=f"^{CANCEL_BUTTON}$"),
-        CommandHandler("start", start)
     ],
     allow_reentry=True
 )

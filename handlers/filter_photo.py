@@ -343,8 +343,7 @@ add_filter_photo_conv = ConversationHandler(
         ]
     },
     fallbacks=[
-        CommandHandler("done", finish_photo),
-        CommandHandler("start", start)
+        CommandHandler("done", finish_photo)
     ],
     allow_reentry=True
 )
