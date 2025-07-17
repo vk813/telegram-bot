@@ -43,7 +43,6 @@ crm_conv_handler = ConversationHandler(
     },
     fallbacks=[
         CommandHandler('cancel', cancel),
-        CommandHandler('start', start)
     ],
     per_message=False,
 )

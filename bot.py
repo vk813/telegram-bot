@@ -117,7 +117,6 @@ filter_add_conv = ConversationHandler(
         CommandHandler("cancel", cancel),
         CallbackQueryHandler(main_menu_callback, pattern="^main_menu$"),
         CallbackQueryHandler(cancel_callback, pattern="^cancel$"),
-        CommandHandler("start", start),
     ]
 )
 
@@ -134,7 +133,6 @@ service_conv = ConversationHandler(
         CommandHandler("cancel", cancel),
         CallbackQueryHandler(cancel_callback, pattern="^cancel$"),
         CallbackQueryHandler(main_menu_callback, pattern="^main_menu$"),
-        CommandHandler("start", start)
     ]
 )
 
@@ -158,6 +156,7 @@ def main():
     if not bot_token:
         print("❌ BOT_TOKEN не найден. Проверьте файл .env!")
         exit(1)
+    bot_token = bot_token.strip()
     constants.VK_CONTACT = os.getenv("VK_CONTACT", "")
 
     # Инициализация приложения и БД
@@ -170,7 +169,6 @@ def main():
 
 
     # --- Handlers ---
-    app.add_handler(CommandHandler("start", start))
     app.add_handler(reg_conv)
     app.add_handler(phone_conv)
     app.add_handler(add_filter_photo_conv)
