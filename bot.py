@@ -156,6 +156,7 @@ def main():
     if not bot_token:
         print("❌ BOT_TOKEN не найден. Проверьте файл .env!")
         exit(1)
+    bot_token = bot_token.strip()
     constants.VK_CONTACT = os.getenv("VK_CONTACT", "")
 
     # Инициализация приложения и БД
