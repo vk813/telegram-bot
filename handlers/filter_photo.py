@@ -2,7 +2,6 @@ import os
 import logging
 from telegram import InputMediaPhoto, InlineKeyboardButton, InlineKeyboardMarkup, Update
 from telegram.ext import ContextTypes, ConversationHandler, MessageHandler, CallbackQueryHandler, CommandHandler, filters
-from handlers.common import start
 
 from database import async_session, Filter
 
@@ -343,8 +342,7 @@ add_filter_photo_conv = ConversationHandler(
         ]
     },
     fallbacks=[
-        CommandHandler("done", finish_photo),
-        CommandHandler("start", start)
+        CommandHandler("done", finish_photo)
     ],
     allow_reentry=True
 )

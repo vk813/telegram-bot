@@ -10,7 +10,6 @@ from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
 from telegram.ext import (
     ConversationHandler, CallbackQueryHandler, ContextTypes, CommandHandler
 )
-from handlers.common import start
 from constants import (MONTH_NAMES, WEEKDAYS, CHOOSING_TYPE, CHOOSING_DATE,
                        MAIN_LABELS, ZAGOROD_LABELS,
                        FILTER_INTERVALS, SUCCESS_MESSAGES, PROFILE_EDIT, PROFILE_PHONE, PROFILE_EMAIL, REAL_TYPE_MAPPING, get_main_inline_keyboard)
@@ -278,6 +277,5 @@ reg_conv = ConversationHandler(
     fallbacks=[
         CallbackQueryHandler(back_to_menu_callback, pattern="^back_to_menu$"),
         CallbackQueryHandler(cancel_calendar_handler, pattern="^calendar_cancel$"),
-        CommandHandler("start", start)
-    ],
+],
 )
