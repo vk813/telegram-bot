@@ -5,7 +5,6 @@ from telegram.ext import (
     ContextTypes, MessageHandler, filters,
     CallbackQueryHandler, ConversationHandler, CommandHandler
 )
-from handlers.common import start
 from database import async_session, User
 from constants import get_main_inline_keyboard, PROFILE_EDIT, PROFILE_PHONE, PROFILE_EMAIL
 from utils import send_clean_message
@@ -152,8 +151,7 @@ phone_conv = ConversationHandler(
     },
     fallbacks=[
         CommandHandler("cancel", cancel_phone),
-        CallbackQueryHandler(cancel_phone, pattern="^back_to_menu$"),
-        CommandHandler("start", start)
+        CallbackQueryHandler(cancel_phone, pattern="^back_to_menu$")
     ],
     per_message=False
 )
