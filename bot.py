@@ -221,6 +221,8 @@ def main():
     app.add_handler(CommandHandler("my_photos", show_filter_photos))
     app.add_handler(CommandHandler("edit_phone", edit_phone))
     app.add_handler(CommandHandler("clear", clear_history))
+    # Регистрация базовой команды /start
+    app.add_handler(CommandHandler("start", start))
     app.add_handler(CallbackQueryHandler(handle_callback))
     app.add_error_handler(error_handler)
 
