@@ -9,6 +9,10 @@ If the bot fails to start with an `InvalidToken` error:
 3. Restart the bot after updating the token.
 4. Check the logs for a message about polling starting. Sending `/start` should trigger a greeting.
 
+The bot registers a dedicated `/start` command via a `CommandHandler`. Make sure
+the token is provided through the `.env` file so the handler is initialized
+correctly and you see a `sendMessage` entry in the log after using `/start`.
+
 For quick diagnostics you can run a minimal bot:
 
 ```bash
