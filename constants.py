@@ -1,9 +1,11 @@
-from telegram import InlineKeyboardButton, InlineKeyboardMarkup  
+import os
+from telegram import InlineKeyboardButton, InlineKeyboardMarkup
+
 VK_CONTACT = ""
 
-
-ADMIN_CHAT_ID = 660442813
-ADMIN_PHONE_NUMBER = "+79213319791"
+# Read sensitive data from environment variables
+ADMIN_CHAT_ID = int(os.getenv("ADMIN_CHAT_ID", "0")) if os.getenv("ADMIN_CHAT_ID") else 0
+ADMIN_PHONE_NUMBER = os.getenv("ADMIN_PHONE_NUMBER", "")
 
 
 MENU_MARKUP = InlineKeyboardMarkup([

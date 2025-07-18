@@ -1,7 +1,7 @@
 import os
 import logging
 import constants
-from constants import *
+from constants import CHOOSING_DATE
 
 from database import init_db
 

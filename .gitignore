@@ -1,0 +1,18 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+
+# Logs
+bot.log
+
+# Local environment variables
+.env
+
+# SQLite database
+*.db
+
+# Uploaded photos
+photos/
+
+# OS files
+.DS_Store
