@@ -72,8 +72,8 @@ async def add_filter_photo(update: Update, context: ContextTypes.DEFAULT_TYPE):
     try:
         async with async_session() as session:
             filter_obj = await session.get(Filter, filter_id)
-            if not filter_obj:
-                await update.message.reply_text("Фильтр не найден.")
+            if not filter_obj or filter_obj.user_id != update.effective_user.id:
+                await update.message.reply_text("Фильтр не найден или принадлежит другому пользователю.")
                 return PHOTO_WAIT
 
             # ГАРАНТИЯ, ЧТО ВСЕГДА СПИСОК
@@ -95,11 +95,12 @@ async def add_filter_photo(update: Update, context: ContextTypes.DEFAULT_TYPE):
         )
         ADMIN_ID = int(os.getenv("ADMIN_CHAT_ID", "660442813"))
         try:
-            await context.bot.send_photo(
-                chat_id=ADMIN_ID,
-                photo=open(path, "rb"),
-                caption=f"Новое фото для фильтра {filter_id} от пользователя {update.effective_user.id}"
-            )
+            with open(path, "rb") as photo_file:
+                await context.bot.send_photo(
+                    chat_id=ADMIN_ID,
+                    photo=photo_file,
+                    caption=f"Новое фото для фильтра {filter_id} от пользователя {update.effective_user.id}"
+                )
         except Exception as e:
             logging.error(f"Ошибка отправки фото админу: {e}")
             await update.message.reply_text("Внимание: фото не удалось отправить менеджеру. Мы уже решаем проблему.")
@@ -169,20 +170,22 @@ async def send_current_photo(update: Update, context: ContextTypes.DEFAULT_TYPE)
 
     if callback_query:
         try:
-            await callback_query.message.edit_media(
-                media=InputMediaPhoto(open(entry["photo"], "rb"), caption=entry["caption"]),
-                reply_markup=InlineKeyboardMarkup([keyboard]) if keyboard else None
-            )
+            with open(entry["photo"], "rb") as img:
+                await callback_query.message.edit_media(
+                    media=InputMediaPhoto(img, caption=entry["caption"]),
+                    reply_markup=InlineKeyboardMarkup([keyboard]) if keyboard else None
+                )
         except Exception as e:
             logging.exception("Ошибка edit_media: %s", e)
             await callback_query.message.reply_text("Ошибка показа фото. Сообщите в поддержку.")
     else:
         try:
-            await msg_obj.reply_photo(
-                photo=open(entry["photo"], "rb"),
-                caption=entry["caption"],
-                reply_markup=InlineKeyboardMarkup([keyboard]) if keyboard else None
-            )
+            with open(entry["photo"], "rb") as img:
+                await msg_obj.reply_photo(
+                    photo=img,
+                    caption=entry["caption"],
+                    reply_markup=InlineKeyboardMarkup([keyboard]) if keyboard else None
+                )
         except Exception as e:
             logging.exception("Ошибка reply_photo: %s", e)
             await msg_obj.reply_text("Ошибка показа фото. Сообщите в поддержку.")
@@ -193,6 +196,9 @@ async def view_photos_callback(update: Update, context: ContextTypes.DEFAULT_TYP
     filter_id = int(query.data.replace("view_photos_", ""))
     async with async_session() as session:
         filter_obj = await session.get(Filter, filter_id)
+        if not filter_obj or filter_obj.user_id != update.effective_user.id:
+            await query.message.reply_text("Фильтр не найден или принадлежит другому пользователю.")
+            return
         photos = ensure_list(filter_obj.photos)
         if not photos:
             await query.message.reply_text("Нет фото для этого фильтра.")
@@ -252,11 +258,12 @@ async def show_delete_photo(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await update.callback_query.message.reply_text("Фото не найдено на сервере.")
         return
 
-    await update.callback_query.message.reply_photo(
-        photo=open(photo_path, "rb"),
-        caption=f"Фото {idx+1} из {len(photos)}",
-        reply_markup=InlineKeyboardMarkup(keyboard)
-    )
+    with open(photo_path, "rb") as img:
+        await update.callback_query.message.reply_photo(
+            photo=img,
+            caption=f"Фото {idx+1} из {len(photos)}",
+            reply_markup=InlineKeyboardMarkup(keyboard)
+        )
 
 async def del_photo_pagination(update: Update, context: ContextTypes.DEFAULT_TYPE):
     query = update.callback_query
@@ -291,6 +298,9 @@ async def del_photo_confirm(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     async with async_session() as session:
         filter_obj = await session.get(Filter, filter_id)
+        if not filter_obj or filter_obj.user_id != update.effective_user.id:
+            await query.message.reply_text("Фильтр не найден или принадлежит другому пользователю.")
+            return
         db_photos = ensure_list(filter_obj.photos)
         if photo_path in db_photos:
             db_photos.remove(photo_path)
@@ -328,10 +338,11 @@ async def photo_pagination_callback(update: Update, context: ContextTypes.DEFAUL
     if idx < len(photos) - 1:
         keyboard.append(InlineKeyboardButton("➡️ Далее", callback_data="photo_next"))
 
-    await query.message.edit_media(
-        media=InputMediaPhoto(open(entry["photo"], "rb"), caption=entry["caption"]),
-        reply_markup=InlineKeyboardMarkup([keyboard]) if keyboard else None
-    )
+    with open(entry["photo"], "rb") as img:
+        await query.message.edit_media(
+            media=InputMediaPhoto(img, caption=entry["caption"]),
+            reply_markup=InlineKeyboardMarkup([keyboard]) if keyboard else None
+        )
     await query.answer()
 
 add_filter_photo_conv = ConversationHandler(

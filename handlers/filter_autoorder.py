@@ -1,5 +1,7 @@
+import logging
 from telegram import Update
 from telegram.ext import ContextTypes
+from database import async_session, Filter
 
 async def autoorder_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
     query = update.callback_query
